@@ -1,0 +1,179 @@
+44 IFNB1 decreasers
+  2 USP15
+  2 HACE1
+  1 NSs
+  1 PRRSV NSP1beta
+  1 IVNS1ABP
+  1 type I IFNs
+  1 PRRSV
+  1 PTHLH
+  1 USP25
+  1 PA
+  1 ORF4b
+  1 PRRSV N protein
+  1 USP15-C269A
+  1 USP15-H862A
+  1 PGG
+  1 lipopolysaccharide
+  1 nsp11
+  1 NSs-R16H
+  1 OCA2
+  1 brefeldin A
+  1 ERN1
+  1 NSs-M250K
+  1 N proteins
+  1 NS1/126-225
+  1 MHV N protein
+  1 STING1
+  1 Thai
+  1 ICS
+  1 CGAS
+  1 Pan H3N2
+  1 TBK1
+  1 TLR4
+  1 UBXN1
+  1 miR-373
+  1 IFNB1
+  1 USP3
+  1 N
+  1 AIM2
+  1 UL36USP
+  1 hIL-10
+  1 UL111A
+  1 IE1
+
+42 TNF decreasers
+  1 PPARG
+  1 RTDs 1-5
+  1 RTD-1
+  1 CWE
+  1 rhACE2
+  1 gram
+  1 glycine betaine
+  1 IgE
+  1 lithium chloride
+  1 IL1B
+  1 CARD9
+  1 LJEE
+  1 G6PD
+  1 CXCR2
+  1 TNF
+  1 cyclosporin A
+  1 quercetin
+  1 c-Rel RNA
+  1 HLF
+  1 IFNB1
+  1 lipopolysaccharide
+  1 bat c-Rel
+  1 Interferon
+  1 AR
+  1 dexamethasone
+  1 pPG-COE-DCpep
+  1 CPB1
+  1 HMGB1-A-BOX protein
+  1 chloroquine
+  1 pentobarbital
+  1 IFX-1
+  1 CQR
+  1 prostaglandin E1
+  1 juglanin
+  1 SB681323
+  1 APOE
+  1 rACE2
+  1 mCEACAM1-4L
+  1 MC21 monoclonal antibody
+  1 PDCD1
+  1 noradrenaline
+  1 hdaD
+
+34 IL6 decreasers
+  2 CXCL9
+  1 TBC1D8
+  1 gram
+  1 ODN2006
+  1 RTD-1
+  1 IL1B
+  1 lithium chloride
+  1 CARD9
+  1 beta-aminoarteether maleate
+  1 copP
+  1 TNF
+  1 cyclosporin A
+  1 HLF
+  1 IFNB1
+  1 Interferon
+  1 EAFPg
+  1 MYCBP2
+  1 chloroquine
+  1 CPB1
+  1 IFX-1
+  1 CQR
+  1 PTX3
+  1 gemfibrozil
+  1 APOE
+  1 rACE2
+  1 MC21 monoclonal antibody
+  1 CYM-5442
+  1 Ad
+  1 hdaD
+  1 Ampligen
+  1 undecanoic acid
+  1 ribavirin
+  1 ERVK-18
+
+29 Interferon decreasers
+  2 MYOM2
+  1 IVNS1ABP
+  1 Interferon
+  1 Beclin
+  1 ATG7
+  1 MIR21
+  1 EV71
+  1 SH2D3A
+  1 RLR
+  1 G_protein
+  1 NEAT1-2
+  1 NS1/126-225
+  1 glycoprotein
+  1 Reactive Oxygen Species
+  1 VP3
+  1 PARP1
+  1 STAT1
+  1 STAT1beta
+  1 MERS-CoV
+  1 BECN1
+  1 TLR3
+  1 N
+  1 ADAR
+  1 JAK
+  1 TLR7
+  1 gI
+  1 Protease
+  1 MTOR
+
+26 ACE2 decreasers
+  2 AGT
+  2 AT1R
+  1 VTN
+  1 aldosterone
+  1 inositol
+  1 Mas receptor
+  1 MLN-4760
+  1 lipopolysaccharide
+  1 MAS1
+  1 miR-200c-5p
+  1 H5N1
+  1 miR-141-3p
+  1 INS
+  1 LTA
+  1 miR-200c-3p
+  1 BLM
+  1 miR-421
+  1 SARS1
+  1 ADAM17
+  1 SARS-S
+  1 Protease
+  1 IFNG
+  1 SHR
+  1 RAS
+
