@@ -22,6 +22,15 @@ reified relations (relation-object pairs, see the docstring in reify_relations()
 for more details). Requires the COVID metadata file and the Harvard processing
 results.
 
+
+== Importing Harvard processing results
+
+$ python3 covid.py --import METADATA_FILE PROCESSING_RESULTS LIF_DIR HAR_DIR N?
+
+For each file in LIF_DIR a file will be created in HAR_DIR which has the reified
+relations from the Harvard data as metadata (because there were no offsets).
+
+
 """
 
 import os
@@ -487,17 +496,118 @@ class Converter(object):
         self.lif.write(self.outfile, pretty=True)
 
 
+class RelationImporter():
+
+    def __init__(self, metadata_file, results_file, lif_dir, out_dir, n=99999):
+        print('Loading metadata...')
+        self.metadata = Metadata(metadata_file)
+        print('Loading Harvard processing results...')
+        self.results = HarvardResults(results_file)
+        self.lif_dir = lif_dir
+        self.out_dir = out_dir
+
+    def convert(self, n=100000):
+        print('Converting files...')
+        self.relations = self.results.collect_relations(self.metadata)
+        self.reified_rels = reify_relations(self.relations)
+        self.filter_relobjs()
+        self.invert_filtered_relobjs()
+        #self.print_reified_rels_counts()
+        #self.print_filtered_relobjs()
+        #print(len(self.inverted_rels))
+        for fname in os.listdir(self.lif_dir)[:n]:
+            infile = os.path.join(self.lif_dir, fname)
+            outfile = os.path.join(self.out_dir, fname)
+            if outfile.endswith('.json'):
+                outfile = outfile[:-4] + 'lif'
+            self.convert_file(fname, infile, outfile)
+
+    def convert_file(self, fname, infile, outfile):
+        print(infile)
+        lif = LIF()
+        lif.text.value = None
+        for relobj, subj in self.inverted_rels.get(fname, []):
+            lif.metadata.setdefault(relobj, []).append(subj)
+        lif.write(outfile, pretty=True)
+
+    def filter_relobjs(self):
+        self.filtered_rels = { reltype: {} for reltype in RELTYPES }
+        for reltype in self.reified_rels:
+            for rel_obj in self.reified_rels[reltype]:
+                subjects = self.reified_rels[reltype][rel_obj]
+                if not is_big(subjects.values(), reltype):
+                    continue
+                self.filtered_rels[reltype].setdefault(rel_obj, {'size': size_of(subjects.values()), 'data': {}})
+                subjects_sorted = reversed(sorted([(len(v), k, v) for k, v in subjects.items()]))
+                for (i, subj, val) in list(subjects_sorted)[:8]:
+                    self.filtered_rels[reltype][rel_obj]['data'].setdefault(subj, []).extend(val)
+
+    def invert_filtered_relobjs(self):
+        """Create the inverted_rels index with the relations indexed on filenames."""
+        self.inverted_rels = {}
+        for reltype in self.reified_rels:
+            for relobj in self.filtered_rels[reltype]:
+                for subj in self.filtered_rels[reltype][relobj]['data']:
+                    for e in self.filtered_rels[reltype][relobj]['data'][subj]:
+                        self.inverted_rels.setdefault(e['sha'] + '.json', []).append((relobj, subj))
+
+    def print_significant_rel_objs(self):
+        for reltype in self.filtered_rels:
+            print(">>> %s\n" % reltype)
+            for relobj in self.filtered_rels[reltype]:
+                print(relobj, self.filtered_rels[reltype][relobj]['size'])
+                for subj in self.filtered_rels[reltype][relobj]['data']:
+                    count = len(self.filtered_rels[reltype][relobj]['data'][subj])
+                    print('    ', count, subj)
+                print()
+
+    def print_filtered_relobjs(self):
+        for reltype in self.filtered_rels:
+            print(">>> %s\n" % reltype)
+            for relobj in self.filtered_rels[reltype]:
+                print(relobj, self.filtered_rels[reltype][relobj]['size'])
+                for subj in self.filtered_rels[reltype][relobj]['data']:
+                    count = len(self.filtered_rels[reltype][relobj]['data'][subj])
+                    print('    ', count, subj)
+                print()
+
+    def print_reified_rels_counts(self):
+        for rt in self.reified_rels:
+            print(rt, len(self.reified_rels[rt]))
+
+
+def size_of(subj_sentences):
+    return sum([len(sents) for sents in subj_sentences])
+
+
+def is_big(subj_sentences, reltype):
+    minimum_size = 25 if reltype.endswith('Amount') else 100
+    return size_of(subj_sentences) >= minimum_size
+
+
+
 if __name__ == '__main__':
 
     if sys.argv[1] == '--convert':
-        metadata_file = sys.argv[2]
+        metadata = sys.argv[2]
         data_dir = sys.argv[3]
         out_dir = sys.argv[4]
         n = int(sys.argv[5]) if len(sys.argv) > 5 else None
-        convert_into_lif(metadata_file, data_dir, out_dir, n)
+        convert_into_lif(metadata, data_dir, out_dir, n)
 
     elif sys.argv[1] == '--create-relations':
-        metadata_file = sys.argv[2]
-        processing_results = sys.argv[3]
+        metadata = sys.argv[2]
+        results = sys.argv[3]
         out_file = sys.argv[4]
-        create_relations_file(metadata_file, processing_results, out_file)
+        create_relations_file(metadata, results, out_file)
+
+    elif sys.argv[1] == '--import':
+        metadata = sys.argv[2]
+        results = sys.argv[3]
+        lif_dir = sys.argv[4]
+        out_dir = sys.argv[5]
+        n = int(sys.argv[6]) if len(sys.argv) > 6 else 100000
+        RelationImporter(metadata, results, lif_dir, out_dir).convert(n)
+
+    else:
+        pass
