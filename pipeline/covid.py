@@ -526,8 +526,9 @@ class RelationImporter():
         print(infile)
         lif = LIF()
         lif.text.value = None
+        lif.metadata['relations'] = {}
         for relobj, subj in self.inverted_rels.get(fname, []):
-            lif.metadata.setdefault(relobj, []).append(subj)
+            lif.metadata['relations'].setdefault(relobj, []).append(subj)
         lif.write(outfile, pretty=True)
 
     def filter_relobjs(self):
@@ -586,6 +587,19 @@ def is_big(subj_sentences, reltype):
 
 
 
+def print_significant_relobjs():
+    DATA = '/Users/Shared/DATA/resources/corpora/covid-19'
+    rc = RelationImporter(
+        os.path.join(DATA, '2020-03-13', 'all_sources_metadata_2020-03-13.csv'),
+        os.path.join(DATA, '2020-03-20', 'cord19_pmc_stmts_filt.json'),
+        os.path.join(DATA, 'processed', 'lif'),
+        os.path.join('/Users', 'marc', 'Downloads', 'out'))
+    rc.relations = rc.results.collect_relations(rc.metadata)
+    rc.reified_rels = reify_relations(rc.relations)
+    rc.filter_relobjs()
+    rc.print_significant_rel_objs()
+
+
 if __name__ == '__main__':
 
     if sys.argv[1] == '--convert':
@@ -609,5 +623,5 @@ if __name__ == '__main__':
         n = int(sys.argv[6]) if len(sys.argv) > 6 else 100000
         RelationImporter(metadata, results, lif_dir, out_dir).convert(n)
 
-    else:
-        pass
+    elif sys.argv[1] == '--test':
+        print_significant_relobjs()

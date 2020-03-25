@@ -1,5 +1,18 @@
 import os
+import sys
 import time
+import getopt
+
+
+def get_options():
+    """Default method for getting options."""
+    options = dict(getopt.getopt(sys.argv[1:], 'd:f:b:e:', ['crash'])[0])
+    data_dir = options.get('-d')
+    filelist = options.get('-f', 'files-random.txt')
+    start = int(options.get('-b', 1))
+    end = int(options.get('-e', 1))
+    crash = True if '--crash' in options else False
+    return data_dir, filelist, start, end, crash
 
 
 def time_elapsed(fun):
