@@ -16,6 +16,15 @@ ela   output
 
 Processes about 40 Covid documents per second.
 
+
+== Example
+
+export COVID=/Users/Shared/DATA/resources/corpora/covid-19
+export DATA=$COVID/processed
+
+python3 create_index.py -d $DATA -f data/filelist-comm_use-random.txt -e 5
+
+
 """
 
 import os, sys, json
@@ -24,7 +33,6 @@ from collections import Counter
 
 from lif import LIF, Annotation
 from utils import time_elapsed, elements, print_element, get_options
-
 
 
 @time_elapsed
@@ -77,13 +85,12 @@ class Document(object):
         self.top = LIF(json_file=top_file)
         self.har = LIF(json_file=har_file)
         # NOTE: no idea why this was needed
+        # TODO: there is an error in lif.py in line 80 where the json object is
+        # handed in as the id
         fix_view('doc', self.lif.views[0])
         fix_view('top', self.top.views[0])
         self.lif.views.append(self.top.views[0])
-        #print(self.lif)
         self.annotations = Annotations(self.id, fname, doc=self, text=self.lif.text.value)
-        # NOTE: commented out for now because it is not clear we need the text
-        # NOTE: we will need it when we need to do full text searches for the demo
         self.annotations.text = self.lif.text.value
         self._collect_authors()
         self._collect_topics()
@@ -94,7 +101,10 @@ class Document(object):
 
     def _collect_authors(self):
         """Just get the authors from the metadata and put them in the index."""
-        self.annotations.authors = self.lif.metadata['authors']
+        def okay(a):
+            # need to do this because the filter in covid.py is faulty
+            return len(a) > 3 and not a[0] == ' ' and not a[-1] == ' '
+        self.annotations.authors = [a for a in self.lif.metadata['authors'] if okay(a)]
 
     def _collect_topics(self):
         """Collect the topics and put them on a list in the index."""
@@ -110,12 +120,16 @@ class Document(object):
     def _collect_relations(self):
         added = False
         for relobj, subjs in self.har.metadata['relations'].items():
+            self.annotations.containers.append(relobj)
+            self.annotations.proteins.append(relobj.rsplit('-', 2)[0])
             for subj in subjs:
+                self.annotations.proteins.append(subj)
                 if relobj in self.annotations.relations:
-                    #print(relobj, subj)
                     added = True
                     self.annotations.relations[relobj].append(subj)
-        #if added:
+        # print(self.annotations.proteins)
+        # print(self.annotations.containers)
+        # if added:
         #    print(self.annotations.relations)
         
     def write(self, dirname):
@@ -176,6 +190,8 @@ class Annotations(object):
         self.topics = []
         self.topic_elements = []
         self.relations = {}
+        self.containers = []
+        self.proteins = []
         for rel in Annotations.RELATIONS:
             self.relations[rel] = []
         self.text = None
@@ -190,6 +206,8 @@ class Annotations(object):
             "author": self.authors,
             "topic": self.topics,
             "topic_element": self.topic_elements,
+            "containers": list(set(self.containers)),
+            "proteins": list(set(self.proteins)),
         }
         for relobj, subj in self.relations.items():
             json_object[relobj] = subj

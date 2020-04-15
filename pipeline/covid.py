@@ -13,6 +13,7 @@ in this case it was all_sources_metadata_2020-03-13.csv. LIF files are written
 to OUT_DIR. The optional last argument can be used to restrict processing to
 some number of files, default is to process all of them.
 
+
 == Creating a relations file
 
 $ python3 covid.py --create-relations METADATA_FILE PROCESSING_RESULTS OUT_FILE
@@ -30,8 +31,24 @@ $ python3 covid.py --import METADATA_FILE PROCESSING_RESULTS LIF_DIR HAR_DIR N?
 For each file in LIF_DIR a file will be created in HAR_DIR which has the reified
 relations from the Harvard data as metadata (because there were no offsets).
 
+TODO: this functionality as well as the --create-relations, should probably be
+done in another script.
+
+
+== Example
+
+export COVID=/Users/Shared/DATA/resources/corpora/covid-19
+export META=$COVID/2020-03-13/all_sources_metadata_2020-03-13.csv
+export HARVARD=$COVID/2020-03-20/cord19_pmc_stmts_filt.json
+export DATA=$COVID/2020-03-13/comm_use_subset
+export OUT=$COVID/processed
+
+python3 covid.py --convert $META $DATA $OUT/lif 5
+python3 covid.py --create-relations $META $HARVARD $OUT/containers.json
+python3 covid.py --import $META $HARVARD $OUT/lif $OUT/har 10
 
 """
+
 
 import os
 import sys
@@ -46,8 +63,9 @@ from collections import Counter
 from lif import LIF, View, Text, Annotation
 
 
+# TODO: add the others
 RELTYPES = {'Activation': ('activates', 'activator'),
-            'Inhibition': ('inhibits','inhibitor'),  
+            'Inhibition': ('inhibits','inhibitor'),
             'IncreaseAmount': ('increases', 'increaser'),
             'DecreaseAmount': ('decreases', 'decreaser')}
 
@@ -105,16 +123,23 @@ class Metadata(object):
         self.sha2pmid = {}
         self.sha2year = {}
         self.pmid2sha = {}
+        lines = 0
+        year_errors = 0
         for fields in self.data:
+            lines += 1
             sha = fields[0]
             pmcid = fields[4]
             pmid = fields[5]
-            year = fields[8]
-            if len(year) > 4 and year[4] == ' ' and year[:4].isdigit():
+            year = fields[8].lstrip("['")
+            if len(year) > 4 and year[4] in ' -' and year[:4].isdigit():
                 year = year[:4]
             self.sha2pmid[sha] = pmid
-            self.sha2year[sha] = year
+            try:
+                self.sha2year[sha] = int(year)
+            except ValueError:
+                year_errors += 1
             self.pmid2sha[pmid] = sha
+        print("Read %s lines and found %s missing years" % (lines, year_errors))
 
     def __getitem__(self, i):
         return self.data[i]
@@ -419,7 +444,7 @@ class Converter(object):
 
     # TODO: add the directory of the sourcefile to the metadata
     # TODO: (this is to destinguish between the licenses)
-    
+
     def __init__(self, infile, outfile, metadata):
         self.infile = infile
         self.outfile = outfile
@@ -436,7 +461,7 @@ class Converter(object):
             self._add_abstract()
             self._add_sections()
             self._finish()
-            
+
     def _setup(self):
         Identifiers.reset()
         self.p = 0
@@ -451,7 +476,11 @@ class Converter(object):
         self.lif.metadata['year'] = self.doc.year
         self.lif.metadata['authors'] = []
         for author in self.doc.authors:
-            self.lif.metadata['authors'].append("%s %s" % (author['first'], author['last']))
+            fullname = "%s %s" % (author['first'], author['last'])
+            # TODO: this is wrong, the test always succeeds
+            if ' ' in fullname:
+                # this filters out all the short single names including the deceased sign
+                self.lif.metadata['authors'].append(fullname)
 
     def _add_docelement_anno(self, docelement_type, p1, p2):
         self.view.add(
@@ -527,7 +556,11 @@ class RelationImporter():
         lif = LIF()
         lif.text.value = None
         lif.metadata['relations'] = {}
+        # PRINT
+        # print(self.relations[0])
         for relobj, subj in self.inverted_rels.get(fname, []):
+            # PRINT
+            # print(subj, relobj)
             lif.metadata['relations'].setdefault(relobj, []).append(subj)
         lif.write(outfile, pretty=True)
 
@@ -536,8 +569,8 @@ class RelationImporter():
         for reltype in self.reified_rels:
             for rel_obj in self.reified_rels[reltype]:
                 subjects = self.reified_rels[reltype][rel_obj]
-                if not is_big(subjects.values(), reltype):
-                    continue
+                #if not is_big(subjects.values(), reltype):
+                #    continue
                 self.filtered_rels[reltype].setdefault(rel_obj, {'size': size_of(subjects.values()), 'data': {}})
                 subjects_sorted = reversed(sorted([(len(v), k, v) for k, v in subjects.items()]))
                 for (i, subj, val) in list(subjects_sorted)[:8]:
@@ -584,7 +617,6 @@ def size_of(subj_sentences):
 def is_big(subj_sentences, reltype):
     minimum_size = 25 if reltype.endswith('Amount') else 100
     return size_of(subj_sentences) >= minimum_size
-
 
 
 def print_significant_relobjs():
