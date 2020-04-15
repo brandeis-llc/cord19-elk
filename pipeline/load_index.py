@@ -8,6 +8,9 @@ $ python load_index.py INDEX_NAME DIRECTORY
 
 Load JSON documents from DIRECTORY into an index named INDEX_NAME.
 
+Edit the HOST and PORT variables below if you do not need the defaults
+(localhost:9200).
+
 """
 
 import os
@@ -18,6 +21,10 @@ import json
 from elastic import Index
 
 
+HOST = 'localhost'
+PORT = 9200
+
+
 def read_documents(document_directory):
     documents = []
     for directory_element in sorted(os.listdir(document_directory)):
@@ -26,14 +33,6 @@ def read_documents(document_directory):
             fname = os.path.join(document_directory, directory_element)
             json_obj = json.loads(codecs.open(fname, encoding='utf8').read())
             documents.append(json_obj)
-        elif len(directory_element) == 4:
-            print("Collecting sentences from %s" % directory_element)
-            subdir = os.path.join(document_directory, directory_element)
-            for fname in sorted(os.listdir(subdir)):
-                if fname.endswith('.json'):
-                    fname = os.path.join(subdir, fname)
-                    json_obj = json.loads(codecs.open(fname, encoding='utf8').read())
-                    documents.append(json_obj)
     return documents
 
 
@@ -50,7 +49,7 @@ if __name__ == '__main__':
         mapping_fname = None
 
     docs = read_documents(source_directory)
-    idx = Index(index_name)
+    idx = Index(index_name, host=HOST, port=PORT)
     if mapping_fname is not None:
         idx.es.indices.delete(index=index_name, ignore=[400, 404])
         mappings = json.load(open(mapping_fname))

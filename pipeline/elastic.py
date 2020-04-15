@@ -8,16 +8,16 @@ from pprint import pprint
 from collections import Counter
 import json
 
-from elasticsearch import Elasticsearch 
+from elasticsearch import Elasticsearch
 from elasticsearch import helpers
 from elasticsearch.exceptions import NotFoundError
 
 
 class Index(object):
 
-    def __init__(self, index_name, index_elements=None):
+    def __init__(self, index_name, host='localhost', port=9200, index_elements=None):
         self.index = index_name
-        self.es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
+        self.es = Elasticsearch([{'host': host, 'port': port}])
         if index_elements is not None:
             self.load(index_elements)
 
@@ -25,6 +25,7 @@ class Index(object):
         for i, element in enumerate(elements):
             docid = element.get('docid')
             identifier = i if docid is None else docid
+            print(docid)
             yield {
                 "_type":"_doc",
                 "_id":identifier,
